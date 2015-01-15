@@ -7,8 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "Card.h"
-@class Match;
+
 typedef enum {
     PlayerMe,
     PlayerOpponent
@@ -17,13 +16,13 @@ typedef enum {
 @interface Hearthstone : NSObject
 
 @property (nonatomic, copy) void(^statusDidUpdate)(BOOL isRunning);
-@property Match *currentPlayingMatch;
 
 + (instancetype)defaultInstance;
 
 + (NSString *)logPath;
 
 - (BOOL)isHearthstoneRunning;
-- (void)quit;
+
+@property (nonatomic, strong) NSMutableArray *updateList;
 
 @end

@@ -64,36 +64,40 @@
         NSString *from = [regexp matchWithString:line atIndex:2];
         NSString *to = [regexp matchWithString:line atIndex:3];
         
-        BOOL draw = [from contains:@"DECK"] && [to contains:@"HAND"];
-        BOOL mulligan = [from contains:@"HAND"] && [to contains:@"DECK"];
-        BOOL discard = [from contains:@"HAND"] && [to contains:@"GRAVEYARD"];
+        if([from contains:@"FRIENDLY DECK"] && [to contains:@"GRAVEYARD"]) {
+            _playerDidDiscardCard(PlayerMe, cardId);
+        }
         
-        if(!draw && !mulligan && !discard) {
-            if([from contains:@"FRIENDLY HAND"]) {
-                _playerDidPlayCard(PlayerMe, cardId);
-            } else if([from contains:@"OPPOSING HAND"]) {
-                _playerDidPlayCard(PlayerOpponent, cardId);
-            }
+        if([from contains:@"FRIENDLY DECK"] && [to contains:@"FRIENDLY HAND"]) {
+            _playerDidDrawCard(PlayerMe, cardId);
+        }
+        
+        if([from contains:@"FRIENDLY HAND"] && [to contains:@"FRIENDLY PLAY"]) {
+            _playerDidPlayCard(PlayerMe, cardId);
         }
         
         if([from contains:@"FRIENDLY PLAY"] && [to contains:@"FRIENDLY HAND"]) {
             _playerDidReturnCard(PlayerMe, cardId);
         }
         
-        // Player died? (unfortunately there is no log entry when conceding)
-        if([to contains:@"GRAVEYARD"] && [from contains:@"PLAY (Hero)"]) {
-            if([to contains:@"FRIENDLY"]) {
-                _playerDidDie(PlayerMe);
-            }
-            else if([to contains:@"OPPOSING"]) {
-                _playerDidDie(PlayerOpponent);
-            }
-        }
-        
-        //NSLog(@"Card %s from %s -> %s. (draw: %d, mulligan %d, discard %d)", cardID.UTF8String, from.UTF8String, to.UTF8String, draw, mulligan, discard);
+        //NSLog(@"%@ to %@", from, to);
     }
     [self analyzeForCoin:line];
     [self analyzeForHero:line];
+    [self analyzeForGameState:line];
+}
+
+- (void)analyzeForGameState:(NSString *)line {
+    if ([line hasPrefix:@"[Asset]"]) {
+        if ([[line lowercaseString] contains:@"victory_screen_start"]) {
+            NSLog(@"Victory!");
+            _playerDidDie(PlayerOpponent);
+        }
+        else if([[line lowercaseString] contains:@"defeat_screen_start"]) {
+            NSLog(@"Defeat");
+            _playerDidDie(PlayerMe);
+        }
+    }
 }
 
 - (void)analyzeForCoin:(NSString *)line {
