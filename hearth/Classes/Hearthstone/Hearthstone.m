@@ -37,6 +37,17 @@
     return [NSHomeDirectory() stringByAppendingPathComponent:@"/Library/Logs/Unity/Player.log"];
 }
 
++ (NSString*)newConfigPath {
+    static NSString *absPath;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSBundle *appBundle = [NSBundle mainBundle];
+        absPath = [appBundle pathForResource:@"log" ofType:@"config" inDirectory:@"Files"];
+        NSLog(@"%@", absPath);
+    });
+    return absPath;
+}
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -50,13 +61,10 @@
 - (void)setup {
     NSFileManager *fm = [NSFileManager defaultManager];
     if (![fm fileExistsAtPath:[[self class] configPath]]) {
-        NSMutableString *file = [NSMutableString new];
-        [file appendString:@"[Zone]\n"];
-        [file appendString:@"LogLevel=1\n"];
-        [file appendString:@"FilePrinting=false\n"];
-        [file appendString:@"ConsolePrinting=true\n"];
-        [file appendString:@"ScreenPrinting=false\n"];
-        
+        NSStringEncoding encoding = NSASCIIStringEncoding;
+        NSString *filePath = [Hearthstone newConfigPath];
+        NSString *file = [NSString stringWithContentsOfFile:filePath usedEncoding:&encoding error:nil];
+
         NSString *dir = [[[self class] configPath] stringByDeletingLastPathComponent];
         
         [fm createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
